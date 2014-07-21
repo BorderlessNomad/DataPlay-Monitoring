@@ -15,7 +15,7 @@ import (
 func main() {
 	m := martini.Classic()
 
-	m.Get("/api/info", GetInfo)
+	m.Get("/info", GetInfo)
 
 	// m.Run()
 	port := "4000"
@@ -56,16 +56,15 @@ func GetInfo(res http.ResponseWriter, req *http.Request) string {
 	}
 
 	mean := Mean(data)
-	variance := Variation(data)
+	variation := Variation(data)
 	standev := StandDev(data)
 
 	info := map[string]interface{}{
-		"endpoint": endPoint,
-		"time": map[string]interface{}{
-			"mean":     math.Ceil(mean) / 1000,
-			"variance": variance,
-			"standev":  math.Ceil(standev) / 1000,
-		},
+		"endpoint":  endPoint,
+		"mean":      math.Ceil(mean / 1000),
+		"standev":   math.Ceil(standev / 1000),
+		"variation": variation,
+		"timestamp": time.Now(),
 	}
 	b, _ := json.Marshal(info)
 
