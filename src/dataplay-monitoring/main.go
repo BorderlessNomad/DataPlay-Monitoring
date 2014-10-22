@@ -15,17 +15,17 @@ import (
 var Logger *log.Logger = log.New(os.Stdout, "[API] ", log.Lshortfile)
 
 func main() {
-	m := martini.Classic()
-
-	m.Get("/info", GetInfo)
-
-	// m.Run()
 	port := "1938"
 	if os.Getenv("DP_MONITORING_PORT") != "" {
 		port = os.Getenv("DP_MONITORING_PORT")
 	}
 
 	Logger.Println("[martini] listening on :" + port)
+
+	m := martini.Classic()
+
+	m.Get("/", GetInfo)
+	m.Get("/info", GetInfo)
 
 	Logger.Fatal(http.ListenAndServe(":"+port, m))
 }
@@ -50,6 +50,7 @@ func GetInfo(res http.ResponseWriter, req *http.Request) string {
 	sortedData, err := c.Cmd("SORT", endPoint, "LIMIT", 0, 100, "GET", endPoint+":*->duration", "BY", endPoint+":*->timestamp", "DESC").List()
 	if err != nil {
 		http.Error(res, "Could not select keys from Redis", http.StatusInternalServerError)
+		return ""
 	}
 
 	data := make([]float64, 0)
