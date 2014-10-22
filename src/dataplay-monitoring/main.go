@@ -12,19 +12,22 @@ import (
 	"time"
 )
 
+var Logger *log.Logger = log.New(os.Stdout, "[API] ", log.Lshortfile)
+
 func main() {
 	m := martini.Classic()
 
 	m.Get("/info", GetInfo)
 
 	// m.Run()
-	port := "4000"
-	if os.Getenv("monitorport") != "" {
-		port = os.Getenv("monitorport")
+	port := "1938"
+	if os.Getenv("DP_MONITORING_PORT") != "" {
+		port = os.Getenv("DP_MONITORING_PORT")
 	}
-	log.Println("[martini] listening on :" + port)
 
-	log.Fatal(http.ListenAndServe(":"+port, m))
+	Logger.Println("[martini] listening on :" + port)
+
+	Logger.Fatal(http.ListenAndServe(":"+port, m))
 }
 
 func GetInfo(res http.ResponseWriter, req *http.Request) string {
@@ -72,14 +75,28 @@ func GetInfo(res http.ResponseWriter, req *http.Request) string {
 }
 
 func GetRedisConnection() (c *redis.Client, err error) {
-	redishost := "10.0.0.2:6379"
-	if os.Getenv("redishost") != "" {
-		redishost = os.Getenv("redishost")
+	redisHost := "10.0.0.2"
+	redisPort := "6379"
+
+	if os.Getenv("DP_REDIS_HOST") != "" {
+		redisHost = os.Getenv("DP_REDIS_HOST")
 	}
 
-	c, err = redis.DialTimeout("tcp", redishost, time.Duration(10)*time.Second)
+	if os.Getenv("DP_REDIS_PORT") != "" {
+		redisPort = os.Getenv("DP_REDIS_PORT")
+	}
 
-	return c, err
+	Logger.Printf("Connecting to Redis on Host %s, Port %s...", redisHost, redisPort)
+	c, err = redis.DialTimeout("tcp", redisHost+":"+redisPort, time.Duration(10)*time.Second)
+
+	if err != nil {
+		Logger.Println("Could not connect to the redis server.")
+		return nil, err
+	}
+
+	Logger.Println("Connected!")
+
+	return c, nil
 }
 
 /**
