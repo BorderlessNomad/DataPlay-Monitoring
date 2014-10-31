@@ -20,36 +20,43 @@ func main() {
 		port = os.Getenv("DP_MONITORING_PORT")
 	}
 
-	Logger.Println("[martini] listening on :" + port)
-
 	m := martini.Classic()
 
 	m.Get("/", GetInfo)
 	m.Get("/info", GetInfo)
+
+	Logger.Println("[martini] listening on :" + port)
 
 	Logger.Fatal(http.ListenAndServe(":"+port, m))
 }
 
 func GetInfo(res http.ResponseWriter, req *http.Request) string {
 	endPoint := "api"
+	db := 1
 
+	Logger.Println("GetRedisConnection", endPoint)
 	c, err := GetRedisConnection()
 	if err != nil {
+		Logger.Println("Could not connect to Redis.", err)
 		http.Error(res, "Could not connect to Redis.", http.StatusInternalServerError)
 		return ""
 	}
 
 	defer c.Close()
 
-	r := c.Cmd("SELECT", 1) // DB 1
+	Logger.Println("SELECT DB", db)
+	r := c.Cmd("SELECT", db)
 	if r.Err != nil {
+		Logger.Println("Could not select database from Redis.", r.Err)
 		http.Error(res, "Could not select database from Redis.", http.StatusInternalServerError)
 		return ""
 	}
 
+	Logger.Println("SORT", endPoint, "LIMIT", 0, 100, "GET", endPoint+":*->duration", "BY", endPoint+":*->timestamp", "DESC")
 	sortedData, err := c.Cmd("SORT", endPoint, "LIMIT", 0, 100, "GET", endPoint+":*->duration", "BY", endPoint+":*->timestamp", "DESC").List()
 	if err != nil {
-		http.Error(res, "Could not select keys from Redis", http.StatusInternalServerError)
+		Logger.Println("Could not select keys from Redis.", err)
+		http.Error(res, "Could not select keys from Redis.", http.StatusInternalServerError)
 		return ""
 	}
 
@@ -70,6 +77,9 @@ func GetInfo(res http.ResponseWriter, req *http.Request) string {
 		"variation": variation,
 		"timestamp": time.Now(),
 	}
+
+	Logger.Println("Data:", info)
+
 	b, _ := json.Marshal(info)
 
 	return string(b)
