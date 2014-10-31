@@ -80,7 +80,7 @@ func GetInfo(res http.ResponseWriter, req *http.Request) string {
 
 	b, _ := json.Marshal(info)
 
-	Logger.Println("Data:", b)
+	Logger.Println("Data:", string(b))
 
 	return string(b)
 }
