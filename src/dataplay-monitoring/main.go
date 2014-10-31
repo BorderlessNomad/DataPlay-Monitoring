@@ -78,9 +78,9 @@ func GetInfo(res http.ResponseWriter, req *http.Request) string {
 		"timestamp": time.Now(),
 	}
 
-	Logger.Println("Data:", info)
-
 	b, _ := json.Marshal(info)
+
+	Logger.Println("Data:", b)
 
 	return string(b)
 }
